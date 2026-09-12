@@ -169,11 +169,27 @@ public sealed partial class ConversionService : IDisposable
         try
         {
             foreach (var job in queue.GetConsumingEnumerable(cts.Token))
-                Run(job, cts.Token);
+            {
+                // This is a thread of our own: an exception escaping it would end the whole game process. Every job
+                // already records its own failures; this catches anything that slips past them.
+                try
+                {
+                    Run(job, cts.Token);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    try { log.Error("A job failed unexpectedly", ex); }
+                    catch (Exception) { /* nothing left to report to */ }
+                }
+            }
         }
         catch (OperationCanceledException)
         {
             // disposed
+        }
+        catch (ObjectDisposedException)
+        {
+            // disposed while waiting for the next job
         }
     }
 

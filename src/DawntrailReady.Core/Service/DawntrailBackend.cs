@@ -13,6 +13,10 @@ namespace DawntrailReady.Core.Service;
 /// </summary>
 public sealed class DawntrailBackend(IGameData game) : IConversionBackend
 {
+    // Resizes, blurs and compositing stay on our low-priority worker thread instead of every core. The plugin ships
+    // its own copy of ImageSharp, so this setting touches nothing outside it; results don't depend on it.
+    static DawntrailBackend() => SixLabors.ImageSharp.Configuration.Default.MaxDegreeOfParallelism = 1;
+
     private readonly ModpackUpgrader upgrader = new(game);
 
     public ModCheck Check(string modFolder)
@@ -102,9 +106,13 @@ public sealed class DawntrailBackend(IGameData game) : IConversionBackend
     /// <summary>Runs TexTools' upgrade on <paramref name="data"/> (in memory) and says whether it really changed the mod.</summary>
     private (UpgradeResult Result, bool Real) Upgrade(ModpackData data, CancellationToken ct)
     {
+        // Textures larger than TextureSizeGuard.MaxSide are refused: the mod is left untouched (the caller records why).
+        TextureSizeGuard.CheckBeforeUpgrade(data, game);
         var before = Snapshot(data);
         var result = upgrader.UpgradeModpack(data, true, ct).GetAwaiter().GetResult();
-        return (result, result.AnyChanges && HasRealChanges(before, result));
+        var real = result.AnyChanges && HasRealChanges(before, result);
+        if (real) TextureSizeGuard.CheckAfterUpgrade(result);
+        return (result, real);
     }
 
     /// <summary>Every option's entries before the upgrade, so replaced files can be compared with their originals.</summary>

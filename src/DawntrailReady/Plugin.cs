@@ -136,6 +136,19 @@ public sealed class Plugin : IDalamudPlugin, IMainWindowActions
 
     private void OnCommand(string command, string args)
     {
+        // A command must never take the game down with it.
+        try
+        {
+            HandleCommand(args);
+        }
+        catch (Exception ex)
+        {
+            log.Error(ex, $"{Command} {args} failed");
+        }
+    }
+
+    private void HandleCommand(string args)
+    {
         // "/dtready convert <file>": the same as "Convert a mod file..." in the window, for a file named directly.
         var trimmed = args.Trim();
         if (trimmed.StartsWith("convert", StringComparison.OrdinalIgnoreCase))

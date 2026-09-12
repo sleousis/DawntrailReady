@@ -98,7 +98,7 @@ public static class DDS
     /// </summary>
     public static async Task<byte[]> ConvertPixelData(byte[] data, int width, int height, XivTexFormat format, int layers = 1, int targetLayer = -1)
     {
-        return await Task.Run(async () =>
+        return await Inline.Run(async () =>
         {
             byte[] imageData;
             if (layers == 0)
@@ -175,7 +175,7 @@ public static class DDS
     {
         var convertedBytes = new List<byte>();
 
-        await Task.Run(() =>
+        await Inline.Run(() =>
         {
             using var ms = new MemoryStream(textureData);
             using var br = new BinaryReader(ms);
@@ -208,7 +208,7 @@ public static class DDS
     {
         var convertedBytes = new List<byte>();
 
-        await Task.Run(() =>
+        await Inline.Run(() =>
         {
             using var ms = new MemoryStream(textureData);
             using var br = new BinaryReader(ms);
@@ -240,7 +240,7 @@ public static class DDS
     {
         var convertedBytes = new List<byte>();
 
-        await Task.Run(() =>
+        await Inline.Run(() =>
         {
             using var ms = new MemoryStream(textureData);
             using var br = new BinaryReader(ms);
@@ -266,7 +266,7 @@ public static class DDS
     {
         var convertedBytes = new List<byte>();
 
-        await Task.Run(() =>
+        await Inline.Run(() =>
         {
             using var ms = new MemoryStream(textureData);
             using var br = new BinaryReader(ms);

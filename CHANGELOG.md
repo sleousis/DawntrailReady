@@ -3,6 +3,12 @@
 Each release's section is shown in Dalamud's plugin installer and on the GitHub release page. The release
 workflow refuses a tag whose version has no section here.
 
+## 0.1.3
+
+- Safer on your PC: a mod whose update would create a texture larger than 4096x4096 (possible with very large old eye masks) is now left untouched, and the reason is shown, instead of producing a texture that can overload the graphics card.
+- Converting no longer uses every CPU core: all work stays on one low-priority background thread, so the game and other plugins keep running smoothly. Results are the same.
+- An unexpected error in the background worker or in a /dtready command can no longer take the game down with it.
+
 ## 0.1.2
 
 - New: "/dtready convert <file>" updates a .pmp or .ttmp2 named by its full path, the same way "Convert a mod file..." does.

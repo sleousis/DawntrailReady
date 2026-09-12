@@ -63,7 +63,7 @@ public static class TextureHelpers
         {
             // Reassign necessary to prevent threading shenanigans.
             var y = i;
-            tasks.Add(Task.Run(() =>
+            tasks.Add(Inline.Run(() =>
             {
                 for (int x = 0; x < width; x++)
                 {
@@ -370,7 +370,7 @@ public static class TextureHelpers
     /// </summary>
     public static async Task<byte[]> ResizeImage(byte[] pixelData, int width, int height, int newWidth, int newHeight, bool nearestNeighbor = false)
     {
-        return await Task.Run(() =>
+        return await Inline.Run(() =>
         {
             using var img = Image.LoadPixelData<Rgba32>(pixelData, width, height);
             img.Mutate(x => x.Resize(

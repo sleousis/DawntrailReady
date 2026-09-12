@@ -95,6 +95,27 @@ public static class PreDawntrailDetector
     }
 
     /// <summary>
+    /// The old iris masks TexTools' upgrade would turn into Dawntrail iris textures: every one whose Dawntrail texture
+    /// the mod doesn't already ship. Used to refuse masks whose converted texture would be too large.
+    /// </summary>
+    public static List<(string Path, FileSource Source)> EyeMasksToConvert(ModpackData data, IGameData game)
+    {
+        var cache = new Dictionary<string, string?>(StringComparer.Ordinal);
+        var masks = new List<(string Path, FileSource Source)>();
+        foreach (var option in data.FileOptions)
+        {
+            var files = option.Files!;
+            foreach (var (path, source) in files)
+            {
+                if (path.EndsWith(".tex", StringComparison.Ordinal) && EndwalkerUpgrade.EyeMaskPathRegex.IsMatch(path)
+                    && !IrisDiffuseProvided(path, files, game, cache))
+                    masks.Add((path, source));
+            }
+        }
+        return masks;
+    }
+
+    /// <summary>
     /// Old-style hair, tail, ear or accessory textures shipped without their material: in Dawntrail the game's own
     /// material reads different paths, so these do nothing until TexTools copies them over.
     /// </summary>

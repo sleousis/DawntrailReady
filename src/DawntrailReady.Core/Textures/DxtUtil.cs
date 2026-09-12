@@ -137,18 +137,17 @@ internal static class DxtUtil
         int blocksAcross = (width + 3) >> 2;
         int blocksDown = (height + 3) >> 2;
 
-        Parallel.ForEach(Partitioner.Create(0, blocksDown), range =>
+        // TexTools decodes rows of blocks with Parallel.ForEach. Each block is decoded on its own, so a plain loop on
+        // the calling (low-priority) thread gives the same bytes without competing with the game for every core.
+        for (int by = 0; by < blocksDown; by++)
         {
-            for (int by = range.Item1; by < range.Item2; by++)
+            for (int bx = 0; bx < blocksAcross; bx++)
             {
-                for (int bx = 0; bx < blocksAcross; bx++)
-                {
-                    int offset = (by * blocksAcross + bx) * bytesPerBlock;
-                    var block = new ReadOnlySpan<byte>(source, offset, bytesPerBlock);
-                    decoder(block, bx, by, width, height, output);
-                }
+                int offset = (by * blocksAcross + bx) * bytesPerBlock;
+                var block = new ReadOnlySpan<byte>(source, offset, bytesPerBlock);
+                decoder(block, bx, by, width, height, output);
             }
-        });
+        }
 
         return output;
     }
