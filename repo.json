@@ -3,7 +3,7 @@
     "Author": "Raiden Shinryu",
     "Name": "Dawntrail Ready",
     "InternalName": "DawntrailReady",
-    "AssemblyVersion": "0.1.2.0",
+    "AssemblyVersion": "0.1.3.0",
     "Description": "Updates mods made before Dawntrail (7.0) the same way TexTools does, without TexTools. Requires Penumbra.\n\n- Import a mod in Penumbra as usual: if it was made before Dawntrail, its models, materials and textures are updated in the background and Penumbra reloads it. Nothing to click.\n- Scan your whole Penumbra library, see which mods are pre-Dawntrail, and update them all at once.\n- Convert a .pmp or .ttmp2 file: the updated copy is saved next to it as \"(Dawntrail).pmp\" and imported into Penumbra.\n\nMods that already work in Dawntrail are never touched. Files are changed in place and no backup is kept.\n\nCommands: /dtready (window), /dtready scan, /dtready convert <file>\n\nThe conversion is ported from TexTools' xivModdingFramework. Dawntrail Ready is free software under the GPL-3.0, like TexTools.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/sleousis/DawntrailReady",
@@ -20,16 +20,16 @@
     "IconUrl": "https://raw.githubusercontent.com/sleousis/DawntrailReady/main/src/DawntrailReady/images/icon.png",
     "Punchline": "Quietly updates old Penumbra mods to Dawntrail when you import them.",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/sleousis/DawntrailReady/releases/download/v0.1.2/DawntrailReady.zip",
-    "DownloadLinkUpdate": "https://github.com/sleousis/DawntrailReady/releases/download/v0.1.2/DawntrailReady.zip",
-    "DownloadLinkTesting": "https://github.com/sleousis/DawntrailReady/releases/download/v0.1.2/DawntrailReady.zip",
+    "DownloadLinkInstall": "https://github.com/sleousis/DawntrailReady/releases/download/v0.1.3/DawntrailReady.zip",
+    "DownloadLinkUpdate": "https://github.com/sleousis/DawntrailReady/releases/download/v0.1.3/DawntrailReady.zip",
+    "DownloadLinkTesting": "https://github.com/sleousis/DawntrailReady/releases/download/v0.1.3/DawntrailReady.zip",
     "CategoryTags": [
       "utility"
     ],
     "IsHide": false,
     "IsTestingExclusive": false,
     "DownloadCount": 0,
-    "LastUpdate": 1789219950,
-    "Changelog": "- New: \"/dtready convert <file>\" updates a .pmp or .ttmp2 named by its full path, the same way \"Convert a mod file...\" does."
+    "LastUpdate": 1789220871,
+    "Changelog": "- Safer on your PC: a mod whose update would create a texture larger than 4096x4096 (possible with very large old eye masks) is now left untouched, and the reason is shown, instead of producing a texture that can overload the graphics card.\n- Converting no longer uses every CPU core: all work stays on one low-priority background thread, so the game and other plugins keep running smoothly. Results are the same.\n- An unexpected error in the background worker or in a /dtready command can no longer take the game down with it."
   }
 ]
