@@ -183,6 +183,11 @@ public static partial class Dat
                     offset += bytesRead;  // offset in buffer for results of next reading
                     if (bytesRead == uncompressedSize) break;
                 }
+
+                // TexTools' zlib (.NET Framework) never touches the buffer past what it decompressed, so the rest
+                // stays zero. Newer runtimes' zlib-ng may use that unused tail as scratch space; clear it to keep
+                // TexTools' result.
+                Array.Clear(decompressedBytes, offset, uncompressedSize - offset);
             }
         }
 

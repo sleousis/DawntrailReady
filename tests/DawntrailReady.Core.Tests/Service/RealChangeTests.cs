@@ -42,21 +42,21 @@ public class RealChangeTests
     }
 
     [Fact]
-    public void A_dawntrail_hair_material_that_is_only_resaved_does_not()
+    public async Task A_dawntrail_hair_material_that_is_only_resaved_does_not()
     {
         // Material-only hair: TexTools' mashup repathing rewrites it even though nothing needs changing.
         var bytes = Bytes(Scenarios.Hair(oldConstants: false));
         var data = Pack(Option("", "Default", (Scenarios.HairMtrl, bytes)));
 
         var before = DawntrailBackend.Snapshot(data);
-        var result = new ModpackUpgrader(new FakeGame()).UpgradeModpack(data).GetAwaiter().GetResult();
+        var result = await new ModpackUpgrader(new FakeGame()).UpgradeModpack(data);
 
         Assert.True(result.AnyChanges); // what TexTools itself reports
         Assert.False(DawntrailBackend.HasRealChanges(before, result));
     }
 
     [Fact]
-    public void A_resave_that_only_normalises_the_dye_flag_does_not()
+    public async Task A_resave_that_only_normalises_the_dye_flag_does_not()
     {
         // The same material, but carrying the dye-table bit without a dye table: TexTools' writer clears it, so the
         // re-saved bytes differ from the original while nothing of substance changed.
@@ -65,7 +65,7 @@ public class RealChangeTests
         var data = Pack(Option("", "Default", (Scenarios.HairMtrl, bytes)));
 
         var before = DawntrailBackend.Snapshot(data);
-        var result = new ModpackUpgrader(new FakeGame()).UpgradeModpack(data).GetAwaiter().GetResult();
+        var result = await new ModpackUpgrader(new FakeGame()).UpgradeModpack(data);
 
         Assert.Contains(result.Changes, c => c.ContentChanged);
         Assert.False(DawntrailBackend.HasRealChanges(before, result));
