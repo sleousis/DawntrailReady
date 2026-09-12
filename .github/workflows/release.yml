@@ -1,0 +1,134 @@
+name: Release
+
+# Tag a commit and this builds the plugin, attaches the zip to a GitHub release, and points the repository
+# file at it. Players who have added the repository see the update on their next Dalamud restart.
+#
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# Run it by hand from the Actions tab to rebuild an existing tag (or: gh workflow run Release -f tag=v1.0.0).
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to rebuild"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Work out the tag
+        id: tag
+        shell: bash
+        run: echo "name=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.name }}
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # The plugin builds against Dalamud's own assemblies, which are not on NuGet. Locally the SDK finds them
+      # in XIVLauncher's dev folder; in CI we fetch the same files and point the build at them.
+      - name: Fetch Dalamud
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://goatcorp.github.io/dalamud-distrib/latest.zip" -OutFile dalamud.zip
+          Expand-Archive -Path dalamud.zip -DestinationPath "$env:GITHUB_WORKSPACE\dalamud" -Force
+
+      # A tag that does not match the project's version ships an update Dalamud never offers, because the
+      # version players already have is the same one. And a release without notes says nothing about itself.
+      - name: Check the tag matches the version and has notes
+        shell: bash
+        run: |
+          ver=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/DawntrailReady/DawntrailReady.csproj | head -1)
+          tag="${{ steps.tag.outputs.name }}"; tag="${tag#v}"
+          if [ "$ver" != "$tag" ] && [ "$ver" != "$tag.0" ]; then
+            echo "::error::tag v$tag does not match <Version>$ver</Version> in DawntrailReady.csproj"
+            exit 1
+          fi
+          short=$(echo "$ver" | cut -d. -f1-3)
+          if ! grep -qE "^## ($short|$ver)[[:space:]]*$" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## $short' section"
+            exit 1
+          fi
+          echo "tag v$tag matches version $ver"
+
+      - name: Test
+        run: dotnet test tests/DawntrailReady.Core.Tests/DawntrailReady.Core.Tests.csproj -c Release --nologo
+
+      - name: Build
+        run: dotnet build src/DawntrailReady/DawntrailReady.csproj -c Release --nologo -p:DalamudLibPath=${{ github.workspace }}\dalamud\
+
+      # The packager names its output latest.zip. The release asset keeps the plugin's name.
+      - name: Name the asset
+        shell: pwsh
+        run: Copy-Item "src/DawntrailReady/bin/Release/DawntrailReady/latest.zip" "DawntrailReady.zip"
+
+      - name: Check the zip holds what the plugin loads at runtime
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path "DawntrailReady.zip"))
+          # The packager writes Windows separators into the zip, so normalise before comparing.
+          try { $names = @($zip.Entries.FullName).Replace('\', '/') } finally { $zip.Dispose() }
+          foreach ($needed in @("DawntrailReady.dll", "DawntrailReady.Core.dll", "DawntrailReady.json")) {
+            if ($names -notcontains $needed) { throw "release zip is missing $needed" }
+          }
+          Write-Host "zip contains every file the plugin opens at runtime"
+
+      - name: Write the release notes
+        shell: bash
+        run: |
+          python tools/make-repo-json.py \
+            --manifest src/DawntrailReady/bin/Release/DawntrailReady/DawntrailReady.json \
+            --tag "${{ steps.tag.outputs.name }}" \
+            --repo "${{ github.repository }}" \
+            --asset "DawntrailReady.zip" \
+            --icon-path "src/DawntrailReady/images/icon.png" \
+            --changelog CHANGELOG.md \
+            --notes-out release-notes.md
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: Dawntrail Ready ${{ steps.tag.outputs.name }}
+          body_path: release-notes.md
+          generate_release_notes: true
+          files: DawntrailReady.zip
+
+      # The repository file lives on the default branch, because that is the URL players paste into Dalamud
+      # and it has to keep working after the tag moves on.
+      - name: Point the repository file at this release
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin ${{ github.event.repository.default_branch }}
+          git checkout -B ${{ github.event.repository.default_branch }} origin/${{ github.event.repository.default_branch }}
+          python tools/make-repo-json.py \
+            --manifest src/DawntrailReady/bin/Release/DawntrailReady/DawntrailReady.json \
+            --tag "${{ steps.tag.outputs.name }}" \
+            --repo "${{ github.repository }}" \
+            --asset "DawntrailReady.zip" \
+            --icon-path "src/DawntrailReady/images/icon.png" \
+            --changelog CHANGELOG.md \
+            --out repo.json
+          if git diff --quiet -- repo.json 2>/dev/null && git ls-files --error-unmatch repo.json >/dev/null 2>&1; then
+            echo "repository file already points at this release"
+          else
+            git add repo.json
+            git commit -m "Point the plugin repository at ${{ steps.tag.outputs.name }}"
+            git push origin HEAD:${{ github.event.repository.default_branch }}
+          fi

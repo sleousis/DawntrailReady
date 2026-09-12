@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Everything that decides anything lives here: no Dalamud, no game types, no ImGui. It is what the
+    tests cover, and it is what keeps working when the game patches.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DawntrailReady.Core</RootNamespace>
+    <AssemblyName>DawntrailReady.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Same version TexTools uses, so resizes, blurs and compositing match its output. TexTools runs on .NET
+      Framework 4.8 and so gets ImageSharp's intrinsics-free build; NuGet would give net10 the netcoreapp3.1 build,
+      whose AVX/FMA paths can round differently. Compile and ship the netstandard2.0 build instead: it has no
+      hardware-intrinsics code paths either.
+    -->
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.11" ExcludeAssets="compile;runtime" GeneratePathProperty="true" />
+    <Reference Include="SixLabors.ImageSharp">
+      <HintPath>$(PkgSixLabors_ImageSharp)\lib\netstandard2.0\SixLabors.ImageSharp.dll</HintPath>
+      <Private>true</Private>
+    </Reference>  </ItemGroup>
+</Project>

@@ -1,0 +1,5 @@
+# Keep line endings out of diffs: everything is LF in the repository, checked out native on Windows.
+* text=auto eol=lf
+
+*.png binary
+*.zip binary

@@ -1,0 +1,48 @@
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+  <PropertyGroup>
+    <!-- Bump with every release; the release workflow refuses a tag that does not match. -->
+    <Version>0.1.2.0</Version>
+    <Author>Raiden Shinryu</Author>
+    <!-- What players see. AssemblyName below is the InternalName Dalamud tracks the plugin by: pick it once. -->
+    <Name>Dawntrail Ready</Name>
+    <Punchline>Quietly updates old Penumbra mods to Dawntrail when you import them.</Punchline>
+    <Description>Updates mods made before Dawntrail (7.0) the same way TexTools does, without TexTools. Requires Penumbra.
+
+- Import a mod in Penumbra as usual: if it was made before Dawntrail, its models, materials and textures are updated in the background and Penumbra reloads it. Nothing to click.
+- Scan your whole Penumbra library, see which mods are pre-Dawntrail, and update them all at once.
+- Convert a .pmp or .ttmp2 file: the updated copy is saved next to it as "(Dawntrail).pmp" and imported into Penumbra.
+
+Mods that already work in Dawntrail are never touched. Files are changed in place and no backup is kept.
+
+Commands: /dtready (window), /dtready scan, /dtready convert &lt;file&gt;
+
+The conversion is ported from TexTools' xivModdingFramework. Dawntrail Ready is free software under the GPL-3.0, like TexTools.</Description>
+    <RepoUrl>https://github.com/sleousis/DawntrailReady</RepoUrl>
+    <IconUrl>https://raw.githubusercontent.com/sleousis/DawntrailReady/main/src/DawntrailReady/images/icon.png</IconUrl>
+    <Tags>penumbra;modding;dawntrail</Tags>
+    <RootNamespace>DawntrailReady</RootNamespace>
+    <AssemblyName>DawntrailReady</AssemblyName>
+    <LangVersion>14.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!--
+      Pin the output path. Without it MSBuild appends the platform whenever it is not AnyCPU, so a solution
+      build (which maps this project to x64) and a project build write different folders, and the dev
+      plugin Dalamud loads from one of them silently goes stale.
+    -->
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DawntrailReady.Core\DawntrailReady.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Release notes live in one file; the "what's new" text can read them from here at runtime. -->
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="DawntrailReady.CHANGELOG.md" Visible="false" />
+    <Content Include="images\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>true</Visible>
+    </Content>
+  </ItemGroup>
+</Project>
