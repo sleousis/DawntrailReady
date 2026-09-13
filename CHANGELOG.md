@@ -3,6 +3,10 @@
 Each release's section is shown in Dalamud's plugin installer and on the GitHub release page. The release
 workflow refuses a tag whose version has no section here.
 
+## 0.1.4
+
+- A new logo: the sunrise and update arrow, redrawn to the same rules as Gleam's and Soundswap's so the three plugins look like one family. Nothing else changes.
+
 ## 0.1.3
 
 - Safer on your PC: a mod whose update would create a texture larger than 4096x4096 (possible with very large old eye masks) is now left untouched, and the reason is shown, instead of producing a texture that can overload the graphics card.
